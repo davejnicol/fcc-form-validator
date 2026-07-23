@@ -45,3 +45,15 @@ function setThemePreference() {
         enableLightTheme();
     }
 }
+
+/* ADD FIXED HEADER CLASS ON SCROLL */
+window.addEventListener('scroll', function() {
+  const header = document.getElementById("myHeader");
+  
+  // Replace 100 with the exact scroll point where you want the fix to trigger
+  if (window.scrollY > 140) { 
+    header.classList.add("fixed-header");
+  } else {
+    header.classList.remove("fixed-header");
+  }
+});
