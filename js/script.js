@@ -4,17 +4,24 @@ const email = document.getElementById("email");
 const password = document.getElementById("password");
 const confirmPassword = document.getElementById("confirmPassword");
 
-// Master function to validate a single field based on its ID
-function validateField(input) {
-    // Reset utility class before re-validating
+// Track whether a user has interacted with a field yet
+const touchedFields = new Set();
+
+// Master function to validate a single field
+function validateField(input, forceCheck = false) {
+    // Prevent validation if the user hasn't finished interacting yet
+    if (!touchedFields.has(input) && !forceCheck) {
+        return true; 
+    }
+
     input.parentElement.className = "form-group";
 
-    // 1. First check if it is empty
+    // 1. Check if empty
     if (!checkRequired([input])) {
         return false;
     }
 
-    // 2. Run specific validations based on which field it is
+    // 2. Run specific field validations
     switch (input.id) {
         case "username":
             return checkLength(input, 3, 15);
@@ -22,9 +29,8 @@ function validateField(input) {
             return checkEmail(input);
         case "password":
             const isValidPass = checkLength(input, 6, 30);
-            // Re-validate confirmation field if password changes
-            if (confirmPassword.value.trim() !== "") {
-                checkPasswordConfirmation(input, confirmPassword);
+            if (confirmPassword.value.trim() !== "" && touchedFields.has(confirmPassword)) {
+                checkPasswordConfirmation(password, confirmPassword);
             }
             return isValidPass;
         case "confirmPassword":
@@ -34,34 +40,81 @@ function validateField(input) {
     }
 }
 
-// REAL-TIME VALIDATION: Listen to typing events on all inputs
+// REAL-TIME VALIDATION ARCHITECTURE
 [username, email, password, confirmPassword].forEach(input => {
-    input.addEventListener("input", () => {
+    // Triggered when user leaves a field (stops early flashing errors)
+    input.addEventListener("blur", () => {
+        touchedFields.add(input);
         validateField(input);
+    });
+
+    // Triggered on every keystroke
+    input.addEventListener("input", () => {
+        // Special case: Update password strength instantly as they type
+        if (input.id === "password") {
+            updatePasswordStrength(input.value);
+        }
+        
+        // Only validate typing if they already blurred the field once before
+        if (touchedFields.has(input)) {
+            validateField(input);
+        }
     });
 });
 
-// SUBMIT VALIDATION: Final check for all fields
+// SUBMIT VALIDATION: Forces validation on everything
 form.addEventListener("submit", (e) => {
     e.preventDefault();
 
+    // Force add all fields to touched status on submit
+    [username, email, password, confirmPassword].forEach(input => touchedFields.add(input));
+
     // Validate every single field and store results
-    const isUsernameValid = validateField(username);
-    const isEmailValid = validateField(email);
-    const isPasswordValid = validateField(password);
-    const isPasswordEqual = validateField(confirmPassword);
+    const isUsernameValid = validateField(username, true);
+    const isEmailValid = validateField(email, true);
+    const isPasswordValid = validateField(password, true);
+    const isPasswordEqual = validateField(confirmPassword, true);
 
     const isFormValid = isUsernameValid && isEmailValid && isPasswordValid && isPasswordEqual;
 
     if (isFormValid) {
         alert("Registration successful!");
         form.reset();
+        touchedFields.clear();
+        updatePasswordStrength(""); // Reset meter
         
         document.querySelectorAll(".form-group").forEach((group) => {
             group.className = "form-group";
         });
     }
 });
+
+// Password Strength Calculator
+function updatePasswordStrength(val) {
+    const meter = document.getElementById("password-strength");
+    if (!meter) return; // Guard clause if HTML element is missing
+
+    if (val.length === 0) {
+        meter.className = "meter-bar";
+        return;
+    }
+
+    let score = 0;
+    if (val.length >= 6) score++;
+    if (val.length >= 10) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+
+    // Map scores to UI classes
+    if (score <= 2) {
+        meter.className = "meter-bar weak";
+    } else if (score <= 4) {
+        meter.className = "meter-bar medium";
+    } else {
+        meter.className = "meter-bar strong";
+    }
+}
 
 // Check that all required fields have a value
 function checkRequired(inputArray) { 
@@ -125,7 +178,7 @@ function showError(input, message) {
     const formGroup = input.parentElement;
     formGroup.className = "form-group error";
     const small = formGroup.querySelector("small");
-    small.innerText = message;
+    if (small) small.innerText = message;
 }
 
 // UI: Show success state
