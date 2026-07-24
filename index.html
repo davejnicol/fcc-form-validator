@@ -68,9 +68,10 @@
 							<input type="email" id="email" placeholder="Enter email" />
 							<small></small>
 						</div>
-						<div class="form-group error">
+						<div class="form-group">
 							<label for="password">Password</label>
 							<input type="password" id="password" placeholder="Enter password" />
+							<button type="button" class="toggle-password eye-show" data-target="password"></button>
 							<small></small>
 							<div class="meter-container">
 								<div id="password-strength" class="meter-bar"></div>
@@ -78,11 +79,12 @@
 						</div>
 						<div class="form-group">
 							<label for="confirmPassword">Confirm Password</label>
-							<input type="password" id="confirmPassword" placeholder="Confirm Password" />
+							<input type="password" id="confirmPassword" placeholder="Confirm password" />
+							<button type="button" class="toggle-password eye-show" data-target="confirmPassword"></button>
 							<small></small>
 						</div>
 
-						<button class="btn" data-type="btn-primary" type="submit">Register</button>
+						<button class="btn btn-wide" data-type="btn-primary" type="submit">Register</button>
 					</form>
 				</div>
 			</section>

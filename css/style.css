@@ -274,7 +274,7 @@ header {
 		margin-bottom: var(--size-5);
 		text-align: center;
 	}
-	button {
+	.btn-wide {
 		font-size: var(--fs-400);
 		margin-block: var(--size-2) var(--size-4);
 		padding-block: var(--size-3);
@@ -328,23 +328,87 @@ header {
 	}
 }
 
-/* 1. Hide the meter by default when input is empty */
+/* Show/Hide Password toggle styles */
+#password:not(:placeholder-shown),
+#confirmPassword:not(:placeholder-shown) {
+	padding-right: 40px;
+}
+#password,
+#confirmPassword {
+	transition: padding-right 0.3s ease;
+}
+#password:placeholder-shown ~ .toggle-password,
+#confirmPassword:placeholder-shown ~ .toggle-password {
+	opacity: 0;
+	cursor: default;
+}
+#password:not(:placeholder-shown) ~ .toggle-password,
+#confirmPassword:not(:placeholder-shown) ~ .toggle-password {
+	opacity: 0.7;
+	visibility: visible;
+}
+#password:not(:placeholder-shown) ~ .toggle-password:hover,
+#confirmPassword:not(:placeholder-shown) ~ .toggle-password:hover {
+	opacity: 1;
+}
+/* #password,
+#confirmPassword {
+	padding-right: 40px;
+} */
+.toggle-password {
+	position: absolute;
+	right: 10px;
+	top: 56%;
+	background: none;
+	border: none;
+	padding: 0;
+	user-select: none;
+	outline: none;
+
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity 0.5s ease;
+}
+.toggle-password.eye-show,
+.toggle-password.eye-hide {
+	cursor: pointer;
+	width: 20px;
+	height: 20px;
+	background-color: currentColor; /* Matches the text color automatically */
+
+	-webkit-mask-size: contain;
+	mask-size: contain;
+	mask-repeat: no-repeat;
+	opacity: 0.7;
+
+	&:hover {
+		opacity: 1;
+	}
+}
+.toggle-password.eye-show {
+	-webkit-mask-image: url("/images/eye-pwd-show.svg");
+	mask-image: url("/images/eye-pwd-show.svg");
+}
+.toggle-password.eye-hide {
+	-webkit-mask-image: url("/images/eye-pwd-hide.svg");
+	mask-image: url("/images/eye-pwd-hide.svg");
+}
+
+/* Meter container & bar styles */
 input:placeholder-shown ~ .meter-container {
 	opacity: 0;
 	visibility: hidden;
-	transform: translateY(5px); /* Optional: small slide effect */
+	transform: translateY(5px);
 	transition:
 		opacity 0.3s,
 		visibility 0.3s,
 		transform 0.3s;
 }
-/* 2. Show the meter automatically when typing begins */
 input:not(:placeholder-shown) ~ .meter-container {
 	opacity: 1;
 	visibility: visible;
 	transform: translateY(0);
 }
-/* Meter container & bar styles */
 .meter-container {
 	position: absolute;
 	top: 12px;

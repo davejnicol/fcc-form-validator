@@ -116,6 +116,30 @@ function updatePasswordStrength(val) {
     }
 }
 
+// Show/Hide Password Toggle Engine
+document.querySelectorAll(".toggle-password").forEach((button) => {
+    button.addEventListener("click", () => {
+        // Find the input field attached to this specific button
+        const targetId = button.getAttribute("data-target");
+        const inputField = document.getElementById(targetId);
+
+        if (!inputField) return;
+
+        // Toggle the input type attribute and swap visual mask classes
+        if (inputField.type === "password") {
+            inputField.type = "text";
+            button.classList.remove("eye-show");
+            button.classList.add("eye-hide");
+            button.setAttribute("aria-label", "Hide password");
+        } else {
+            inputField.type = "password";
+            button.classList.remove("eye-hide");
+            button.classList.add("eye-show");
+            button.setAttribute("aria-label", "Show password");
+        }
+    });
+});
+
 // Check that all required fields have a value
 function checkRequired(inputArray) { 
     let isValid = true;
