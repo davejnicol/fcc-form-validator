@@ -4,18 +4,54 @@ const email = document.getElementById("email");
 const password = document.getElementById("password");
 const confirmPassword = document.getElementById("confirmPassword");
 
+// Master function to validate a single field based on its ID
+function validateField(input) {
+    // Reset utility class before re-validating
+    input.parentElement.className = "form-group";
+
+    // 1. First check if it is empty
+    if (!checkRequired([input])) {
+        return false;
+    }
+
+    // 2. Run specific validations based on which field it is
+    switch (input.id) {
+        case "username":
+            return checkLength(input, 3, 15);
+        case "email":
+            return checkEmail(input);
+        case "password":
+            const isValidPass = checkLength(input, 6, 30);
+            // Re-validate confirmation field if password changes
+            if (confirmPassword.value.trim() !== "") {
+                checkPasswordConfirmation(input, confirmPassword);
+            }
+            return isValidPass;
+        case "confirmPassword":
+            return checkPasswordConfirmation(password, confirmPassword);
+        default:
+            return true;
+    }
+}
+
+// REAL-TIME VALIDATION: Listen to typing events on all inputs
+[username, email, password, confirmPassword].forEach(input => {
+    input.addEventListener("input", () => {
+        validateField(input);
+    });
+});
+
+// SUBMIT VALIDATION: Final check for all fields
 form.addEventListener("submit", (e) => {
     e.preventDefault();
 
-    // Run all validations simultaneously so the user sees all errors at once
-    const isRequiredValid = checkRequired([username, email, password, confirmPassword]);
-    const isUsernameValid = checkLength(username, 3, 15);
-    const isEmailValid = checkEmail(email);
-    const isPasswordValid = checkLength(password, 6, 30);
-    const isPasswordEqual = checkPasswordConfirmation(password, confirmPassword);
+    // Validate every single field and store results
+    const isUsernameValid = validateField(username);
+    const isEmailValid = validateField(email);
+    const isPasswordValid = validateField(password);
+    const isPasswordEqual = validateField(confirmPassword);
 
-    // Form is only valid if every single check passes
-    const isFormValid = isRequiredValid && isUsernameValid && isEmailValid && isPasswordValid && isPasswordEqual;
+    const isFormValid = isUsernameValid && isEmailValid && isPasswordValid && isPasswordEqual;
 
     if (isFormValid) {
         alert("Registration successful!");
@@ -30,14 +66,12 @@ form.addEventListener("submit", (e) => {
 // Check that all required fields have a value
 function checkRequired(inputArray) { 
     let isValid = true;
-
     inputArray.forEach(input => {
         if (input.value.trim() === "") {
             showError(input, `${formatFieldName(input)} is required`);
             isValid = false;
         }
     });
-
     return isValid;
 }
 
@@ -51,8 +85,6 @@ function formatFieldName(input) {
 
 // Check input length constraints
 function checkLength(input, min, max) { 
-    if (input.value.trim() === "") return false; // Skip if empty (handled by checkRequired)
-
     const length = input.value.length;
     if (length < min) {
         showError(input, `${formatFieldName(input)} must be at least ${min} characters`);
@@ -62,30 +94,24 @@ function checkLength(input, min, max) {
         showError(input, `${formatFieldName(input)} must be less than ${max} characters`);
         return false;
     }
-
     showSuccess(input);
     return true;
 }
 
 // Validate email format using regex
 function checkEmail(emailInput) {
-    if (emailInput.value.trim() === "") return false;
-
     // Email regex that covers most common email formats
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (emailRegex.test(emailInput.value.trim())) {
         showSuccess(emailInput);
         return true;
     }
-
     showError(emailInput, "Email is not valid");
     return false;
 }
 
 // Confirm both passwords match
 function checkPasswordConfirmation(input1, input2) {
-    if (input1.value.trim() === "" || input2.value.trim() === "") return false;
-
     if (input1.value !== input2.value) {
         showError(input2, "Passwords do not match");
         return false;
