@@ -3,9 +3,27 @@ const username = document.getElementById("username");
 const email = document.getElementById("email");
 const password = document.getElementById("password");
 const confirmPassword = document.getElementById("confirmPassword");
+const submitButton = document.getElementById("registration-submit");
 
 // Track whether a user has interacted with a field yet
 const touchedFields = new Set();
+
+// UTILITY: Silent background check to toggle button status
+	function checkFormValidity() {
+		// Basic structural checks using identical parameters as the visual UI validations
+		const isUserOk = username.value.length >= 3 && username.value.length <= 15;
+		const isEmailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim());
+		const isPassOk = password.value.length >= 6 && password.value.length <= 30;
+		const isMatchOk = password.value === confirmPassword.value && confirmPassword.value !== "";
+
+		if (isUserOk && isEmailOk && isPassOk && isMatchOk) {
+			submitButton.removeAttribute("disabled");
+			submitButton.setAttribute("aria-disabled", "false");
+		} else {
+			submitButton.setAttribute("disabled", "true");
+			submitButton.setAttribute("aria-disabled", "true");
+		}
+	}
 
 // Master function to validate a single field
 function validateField(input, forceCheck = false) {
@@ -16,12 +34,12 @@ function validateField(input, forceCheck = false) {
 
     input.parentElement.className = "form-group";
 
-    // 1. Check if empty
+    // Check if empty
     if (!checkRequired([input])) {
         return false;
     }
 
-    // 2. Run specific field validations
+    // Run specific field validations
     switch (input.id) {
         case "username":
             return checkLength(input, 3, 15);
@@ -40,12 +58,13 @@ function validateField(input, forceCheck = false) {
     }
 }
 
-// REAL-TIME VALIDATION ARCHITECTURE
+// REAL-TIME VALIDATION ARCHITECTURE LOOP WITH AUTOSAVE LOGIC
 [username, email, password, confirmPassword].forEach(input => {
     // Triggered when user leaves a field (stops early flashing errors)
     input.addEventListener("blur", () => {
         touchedFields.add(input);
         validateField(input);
+        checkFormValidity(); // Check validity on blur
     });
 
     // Triggered on every keystroke
@@ -59,10 +78,12 @@ function validateField(input, forceCheck = false) {
         if (touchedFields.has(input)) {
             validateField(input);
         }
+
+        checkFormValidity(); // Check validity on every keystroke
     });
 });
 
-// SUBMIT VALIDATION: Forces validation on everything
+// SUBMIT VALIDATION: Forces validation on everything & cleans up form state upon successful confirmation
 form.addEventListener("submit", (e) => {
     e.preventDefault();
 
@@ -82,6 +103,9 @@ form.addEventListener("submit", (e) => {
         form.reset();
         touchedFields.clear();
         updatePasswordStrength(""); // Reset meter
+
+        // Re-disable button after a successful submission reset
+		submitButton.setAttribute("disabled", "true");
         
         document.querySelectorAll(".form-group").forEach((group) => {
             group.className = "form-group";

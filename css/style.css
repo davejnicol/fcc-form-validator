@@ -61,7 +61,7 @@
 	--btn-default-dark: var(--clr-neutral-300);
 	--btn-default-hover-dark: var(--clr-neutral-200);
 	--btn-primary-dark: var(--clr-blue-500);
-	--btn-primary-hover-dark: var(--clr-blue-400);
+	--btn-primary-hover-dark: var(--clr-blue-600);
 	--text-primary-dark: var(--clr-neutral-100);
 	--svg-hover-dark: var(--clr-neutral-800);
 
@@ -134,9 +134,10 @@ footer {
 }
 h1,
 h2 {
-	padding-block-end: var(--size-2);
+	line-height: 1;
+	padding-block: var(--size-2);
 }
-p:not(:last-child) {
+p {
 	padding-block-end: var(--size-4);
 }
 
@@ -241,7 +242,7 @@ header {
 
 .grid-auto-fit {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
 	align-items: center;
 	justify-content: center;
 	gap: var(--size-2);
@@ -348,13 +349,12 @@ header {
 	visibility: visible;
 }
 #password:not(:placeholder-shown) ~ .toggle-password:hover,
-#confirmPassword:not(:placeholder-shown) ~ .toggle-password:hover {
+#password:not(:placeholder-shown) ~ .toggle-password:focus-visible,
+#confirmPassword:not(:placeholder-shown) ~ .toggle-password:hover,
+#confirmPassword:not(:placeholder-shown) ~ .toggle-password:focus-visible {
 	opacity: 1;
+	scale: 1;
 }
-/* #password,
-#confirmPassword {
-	padding-right: 40px;
-} */
 .toggle-password {
 	position: absolute;
 	right: 10px;
@@ -366,8 +366,11 @@ header {
 	outline: none;
 
 	opacity: 0;
+	scale: 0.9;
 	visibility: hidden;
-	transition: opacity 0.5s ease;
+	transition:
+		opacity 0.5s ease,
+		scale 0.3s ease-in-out;
 }
 .toggle-password.eye-show,
 .toggle-password.eye-hide {
@@ -454,4 +457,10 @@ input:not(:placeholder-shown) ~ .meter-container {
 	background-color: rgba(from var(--color-frm-success) r g b / 0.4);
 	border-color: var(--color-frm-success);
 	width: 100%;
+}
+/* State when button is JavaScript disabled */
+#registration-submit:disabled {
+	background-color: rgba(from var(--button-default) r g b / 0.4);
+	cursor: not-allowed;
+	opacity: 0.6;
 }
