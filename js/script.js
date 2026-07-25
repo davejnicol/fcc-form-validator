@@ -8,12 +8,21 @@ const submitButton = document.getElementById("registration-submit");
 // Track whether a user has interacted with a field yet
 const touchedFields = new Set();
 
+// Variables used throughout
+const emailLenMin = 3;
+const emailLenMax = 15
+const passwordLenMin = 6;
+const passwordLenMax = 30;
+
+// Keep track of active timer so it can be cleared on a new submission
+let statusTimeoutId = null;
+
 // UTILITY: Silent background check to toggle button status
 function checkFormValidity() {
     // Basic structural checks using identical parameters as the visual UI validations
-    const isUserOk = username.value.length >= 3 && username.value.length <= 15;
+    const isUserOk = username.value.length >= emailLenMin && username.value.length <= emailLenMax;
     const isEmailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim());
-    const isPassOk = password.value.length >= 6 && password.value.length <= 30;
+    const isPassOk = password.value.length >= passwordLenMin && password.value.length <= passwordLenMax;
     const isMatchOk = password.value === confirmPassword.value && confirmPassword.value !== "";
 
     if (isUserOk && isEmailOk && isPassOk && isMatchOk) {
@@ -42,11 +51,12 @@ function validateField(input, forceCheck = false) {
     // Run specific field validations
     switch (input.id) {
         case "username":
-            return checkLength(input, 3, 15);
+            return checkLength(input, emailLenMin, emailLenMax);
         case "email":
             return checkEmail(input);
         case "password":
-            const isValidPass = checkLength(input, 6, 30);
+            const isValidPass = checkLength(input, passwordLenMin, passwordLenMax);
+
             if (confirmPassword.value.trim() !== "" && touchedFields.has(confirmPassword)) {
                 checkPasswordConfirmation(password, confirmPassword);
             }
@@ -83,9 +93,50 @@ function validateField(input, forceCheck = false) {
     });
 });
 
-// SUBMIT VALIDATION: Forces validation on everything, cleans up form state upon successful confirmation, & sends data to a mock server
+// HELPER: Updates and displays the form alert message container
+function showFormStatus(text, isSuccess) {
+    const statusMsg = document.getElementById("form-status-msg");
+    if (!statusMsg) return;
+    
+    // Clear any pending auto-hide timer immediately
+    if (statusTimeoutId) {
+        clearTimeout(statusTimeoutId);
+    }
+
+    statusMsg.className = "status-msg " + (isSuccess ? "success" : "error");
+    statusMsg.innerText = text;
+    
+    // Make visible in the DOM structure, then trigger CSS opacity animation
+    statusMsg.style.display = 'block';
+    // Small timeout ensures the browser registers display block before animating opacity
+    setTimeout(() => statusMsg.classList.add("visible"), 10);
+
+    // If it is a success state, trigger the 5-second auto-hide fade out sequence
+    if (isSuccess) {
+        statusTimeoutId = setTimeout(() => {
+            statusMsg.classList.remove("visible");
+            
+            // Fully remove from view after fade opacity transition completes (400ms)
+            statusTimeoutId = setTimeout(() => {
+                statusMsg.style.display = "none";
+                statusMsg.className = "status-msg";
+            }, 400);
+        }, 5000);
+    }
+}
+
+// SUBMIT VALIDATION: Forces validation, cleans up form state upon successful confirmation, & sends data to a mock server
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    // Hide any previous message box when starting a new submit cycle
+    const statusMsg = document.getElementById('form-status-msg');
+    
+    if (statusMsg) {
+        if (statusTimeoutId) clearTimeout(statusTimeoutId);
+        statusMsg.classList.remove("visible");
+        statusMsg.style.display = "none";
+    }
 
     // Force add all fields to touched status on submit
     [username, email, password, confirmPassword].forEach(input => touchedFields.add(input));
@@ -126,7 +177,7 @@ form.addEventListener("submit", async (e) => {
             const data = await response.json();
             console.log("Server Response:", data); // Check your developer console to see the mock ID created
 
-            alert("Registration successful! Your account has been created.");
+            showFormStatus("Registration successful! Your account has been created.", true);
 
             // Reset everything on success
             form.reset();
@@ -138,7 +189,7 @@ form.addEventListener("submit", async (e) => {
         }
     } catch (error) {
         console.error("Network Error:", error);
-        alert("Something went wrong with the server connection. Please try again later.");
+        showFormStatus("Something went wrong with the server connection. Please try again later.", false);
     } finally {
         // 4. Clean up: Restore button state regardless of success or failure
         submitButton.innerHTML = originalButtonText;
