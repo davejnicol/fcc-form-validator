@@ -9,21 +9,21 @@ const submitButton = document.getElementById("registration-submit");
 const touchedFields = new Set();
 
 // UTILITY: Silent background check to toggle button status
-	function checkFormValidity() {
-		// Basic structural checks using identical parameters as the visual UI validations
-		const isUserOk = username.value.length >= 3 && username.value.length <= 15;
-		const isEmailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim());
-		const isPassOk = password.value.length >= 6 && password.value.length <= 30;
-		const isMatchOk = password.value === confirmPassword.value && confirmPassword.value !== "";
+function checkFormValidity() {
+    // Basic structural checks using identical parameters as the visual UI validations
+    const isUserOk = username.value.length >= 3 && username.value.length <= 15;
+    const isEmailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim());
+    const isPassOk = password.value.length >= 6 && password.value.length <= 30;
+    const isMatchOk = password.value === confirmPassword.value && confirmPassword.value !== "";
 
-		if (isUserOk && isEmailOk && isPassOk && isMatchOk) {
-			submitButton.removeAttribute("disabled");
-			submitButton.setAttribute("aria-disabled", "false");
-		} else {
-			submitButton.setAttribute("disabled", "true");
-			submitButton.setAttribute("aria-disabled", "true");
-		}
-	}
+    if (isUserOk && isEmailOk && isPassOk && isMatchOk) {
+        submitButton.removeAttribute("disabled");
+        submitButton.setAttribute("aria-disabled", "false");
+    } else {
+        submitButton.setAttribute("disabled", "true");
+        submitButton.setAttribute("aria-disabled", "true");
+    }
+}
 
 // Master function to validate a single field
 function validateField(input, forceCheck = false) {
@@ -83,8 +83,8 @@ function validateField(input, forceCheck = false) {
     });
 });
 
-// SUBMIT VALIDATION: Forces validation on everything & cleans up form state upon successful confirmation
-form.addEventListener("submit", (e) => {
+// SUBMIT VALIDATION: Forces validation on everything, cleans up form state upon successful confirmation, & sends data to a mock server
+form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     // Force add all fields to touched status on submit
@@ -98,18 +98,51 @@ form.addEventListener("submit", (e) => {
 
     const isFormValid = isUsernameValid && isEmailValid && isPasswordValid && isPasswordEqual;
 
-    if (isFormValid) {
-        alert("Registration successful!");
-        form.reset();
-        touchedFields.clear();
-        updatePasswordStrength(""); // Reset meter
+    if (!isFormValid) return;
 
-        // Re-disable button after a successful submission reset
-		submitButton.setAttribute("disabled", "true");
-        
-        document.querySelectorAll(".form-group").forEach((group) => {
-            group.className = "form-group";
+    // 1. Prepare UI Loading State
+    submitButton.disabled = true;
+    const originalButtonText = submitButton.innerHTML;
+    submitButton.innerHTML = `<span class="btn-inline-spinner"></span> Registering...`;
+
+    // 2. Gather form data payload
+    const formData = {
+        username: username.value.trim(),
+        email: email.value.trim(),
+        password: password.value, // Do not trim passwords to preserve spaces intentionally set
+    };
+
+    // 3. Initiate the mock backend network call
+    try {
+        const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
         });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log("Server Response:", data); // Check your developer console to see the mock ID created
+
+            alert("Registration successful! Your account has been created.");
+
+            // Reset everything on success
+            form.reset();
+            touchedFields.clear();
+            updatePasswordStrength("");
+            document.querySelectorAll(".form-group").forEach((group) => (group.className = "form-group"));
+        } else {
+            throw new Error("Server rejected registration request.");
+        }
+    } catch (error) {
+        console.error("Network Error:", error);
+        alert("Something went wrong with the server connection. Please try again later.");
+    } finally {
+        // 4. Clean up: Restore button state regardless of success or failure
+        submitButton.innerHTML = originalButtonText;
+        checkFormValidity(); // Recalculate button lock status based on current fields
     }
 });
 
